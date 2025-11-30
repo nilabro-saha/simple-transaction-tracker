@@ -1,0 +1,379 @@
+{
+  "readers": [
+    {
+      "id": {
+        "institution": "ICICI Bank",
+        "account_type": "Savings Account",
+        "version": 1
+      },
+      "file_format": ".xls",
+      "schema": {
+        "adapter_type": "DEFAULT",
+        "columns": [
+          {
+            "name": "S No.",
+            "data_type": "INTEGER",
+            "nullable": false,
+            "day_sort_order": 1
+          },
+          {
+            "name": "Value Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "dd,MM,yyyy"
+          },
+          {
+            "name": "Transaction Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "dd,MM,yyyy",
+            "day_sort_order": 0,
+            "index_by": true,
+            "mapped_column": "date"
+          },
+          {
+            "name": "Transaction Remarks",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "description"
+          },
+          {
+            "name": "Withdrawal Amount (INR )",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "withdrawn"
+          },
+          {
+            "name": "Deposit Amount (INR )",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "deposited"
+          },
+          {
+            "name": "Balance (INR )",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "balance"
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "institution": "ICICI Bank",
+        "account_type": "Fixed Deposit",
+        "version": 1
+      },
+      "file_format": ".xlsx",
+      "schema": {
+        "adapter_type": "NET_AMOUNT_AND_BALANCE",
+        "columns": [
+          {
+            "name": "Deposit Srl No",
+            "data_type": "INTEGER",
+            "nullable": false,
+            "day_sort_order": 1
+          },
+          {
+            "name": "Deposit Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "ddMMyyyy"
+          },
+          {
+            "name": "Deposit Amount",
+            "data_type": "REAL",
+            "nullable": true
+          },
+          {
+            "name": "Interest Amount",
+            "data_type": "REAL",
+            "nullable": true
+          },
+          {
+            "name": "Transaction Date",
+            "data_type": "DATE",
+            "date_format": "ddMMyyyy",
+            "nullable": false,
+            "index_by": true,
+            "day_sort_order": 0,
+            "mapped_column": "date"
+          },
+          {
+            "name": "Transaction Amount",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "net_amount"
+          },
+          {
+            "name": "Transaction Type",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "description"
+          },
+          {
+            "name": "Cumulative Balance",
+            "data_type": "REAL",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "balance"
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "institution": "ICICI Bank",
+        "account_type": "Public Provident Fund",
+        "version": 1
+      },
+      "file_format": ".xls",
+      "schema": {
+        "adapter_type": "DEFAULT",
+        "columns": [
+          {
+            "name": "Sr No.",
+            "data_type": "INTEGER",
+            "nullable": false
+          },
+          {
+            "name": "Transaction Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "dd,MM,yyyy",
+            "index_by": true,
+            "day_sort_order": 0,
+            "mapped_column": "date"
+          },
+          {
+            "name": "Transaction Remarks",
+            "data_type": "TEXT",
+            "nullable": false,
+            "mapped_column": "description",
+            "index_by": true
+          },
+          {
+            "name": "Withdrawal Amount (INR )",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "withdrawn"
+          },
+          {
+            "name": "Deposit Amount (INR )",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "deposited"
+          },
+          {
+            "name": "Balance (INR )",
+            "data_type": "REAL",
+            "nullable": false,
+            "index_by": true,
+            "day_sort_order": 1,
+            "mapped_column": "balance"
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "institution": "Indian Bank",
+        "account_type": "Savings Account",
+        "version": 1
+      },
+      "file_format": ".xlsx",
+      "schema": {
+        "adapter_type": "DEFAULT",
+        "columns": [
+          {
+            "name": "Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "dd MMM yyyy",
+            "index_by": true,
+            "mapped_column": "date"
+          },
+          {
+            "name": "Transaction Details",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "description"
+          },
+          {
+            "name": "Debits",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "withdrawn"
+          },
+          {
+            "name": "Credits",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "deposited"
+          },
+          {
+            "name": "Balance",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "balance"
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "institution": "Nippon India Mutual Fund",
+        "account_type": "Mutual Fund",
+        "version": 1
+      },
+      "file_format": ".xls",
+      "schema": {
+        "adapter_type": "DEPOSITED_ONLY",
+        "columns": [
+          {
+            "name": "Acno",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "account_number"
+          },
+          {
+            "name": "TrDate",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "dd/MM/yyyy",
+            "day_sort_order": 0,
+            "index_by": true,
+            "mapped_column": "date"
+          },
+          {
+            "name": "TrDesc",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "description"
+          },
+          {
+            "name": "Amount",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "deposited"
+          },
+          {
+            "name": "BalUnits",
+            "data_type": "REAL",
+            "nullable": false,
+            "day_sort_order": 1,
+            "index_by": true
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "institution": "State Bank of India",
+        "account_type": "Savings Account",
+        "version": 1
+      },
+      "file_format": ".pdf",
+      "schema": {
+        "adapter_type": "DEFAULT",
+        "columns": [
+          {
+            "name": "Txn Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format":"dd MMM yyyy",
+            "index_by": true,
+            "mapped_column": "date"
+          },
+          {
+            "name": "Description",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "description"
+          },
+          {
+            "name": "Debit",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "withdrawn"
+          },
+          {
+            "name": "Credit",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "deposited"
+          },
+          {
+            "name": "Balance",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "balance"
+          }
+        ]
+      }
+    },
+    {
+      "id": {
+        "institution": "State Bank of India",
+        "account_type":"Mutual Fund",
+        "version": 1
+      },
+      "file_format": ".xlsx",
+      "schema": {
+        "adapter_type": "NET_AMOUNT_ONLY",
+        "columns": [
+          {
+            "name": "Date",
+            "data_type": "DATE",
+            "nullable": false,
+            "date_format": "dd/MM/yyyy",
+            "day_sort_order": 0,
+            "index_by": true,
+            "mapped_column": "date"
+          },
+          {
+            "name": "Transaction Type",
+            "data_type": "TEXT",
+            "nullable": false,
+            "index_by": true,
+            "mapped_column": "description"
+          },
+          {
+            "name": "Amount",
+            "data_type": "REAL",
+            "nullable": false,
+            "mapped_column": "net_amount"
+          },
+          {
+            "name": "NAV in INR ( Rs.)",
+            "data_type": "REAL",
+            "nullable": false
+          },
+          {
+            "name": "Price in INR(Rs.)",
+            "data_type": "REAL",
+            "nullable": false
+          },
+          {
+            "name": "Number of Units",
+            "data_type": "REAL",
+            "nullable": false
+          },
+          {
+            "name": "Balance Unit",
+            "data_type": "REAL",
+            "nullable": false,
+            "day_sort_order": 1,
+            "index_by": true
+          }
+        ]
+      }
+    }
+  ]
+}

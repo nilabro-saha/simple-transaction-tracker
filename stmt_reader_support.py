@@ -121,7 +121,7 @@ class StmtColumn:
   data_type:StmtColType
   nullable:bool = True
   date_format:str | None = None
-  day_sort_order:int = None
+  day_sort_order:int | None = None
   index_by:bool = False
   mapped_column:str | None = None
   
