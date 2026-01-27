@@ -27,6 +27,7 @@ class BankTransaction:
 class MonthlyAccountStats:
   year_month:str
   account_number:str
+  display_name:str
   cashflow:float
   month_end_balance:float
   
@@ -43,6 +44,7 @@ class MonthlyAccountStats:
     return MonthlyAccountStats(
       year_month=map['year_month'],
       account_number=map['account_number'],
+      display_name=map['display_name'],
       cashflow=map['cashflow'],
       month_end_balance=map['month_end_balance']
     )
@@ -51,60 +53,30 @@ class MonthlyAccountStats:
     return {
       'year_month': self.year_month,
       'account_number': self.account_number,
+      'display_name': self.display_name,
       'cashflow': self.cashflow,
       'month_end_balance': self.month_end_balance
     }
 
-@dataclass
-class PivotRow:
-  name:str
-  data:list[Any]
-  
-  def to_dict(self) -> dict[str, Any]:
-    return {'name': self.name, 'data': self.data}
-  
-  @staticmethod
-  def from_dict(map:dict[str, Any]) -> 'PivotRow':
-    return PivotRow(name=map['name'], data=map['data'])
-
 def get_col_vals(df:pd.DataFrame, col:str) -> list[Any]:
   return [(None if np.isnan(val) else val) for val in df[col].tolist()]
-    
-@dataclass
-class PivotTable:
-  labels:list[str]
-  series:list[PivotRow]
-  
-  @staticmethod
-  def from_dataframe(pivot:pd.DataFrame, index_col:str) -> 'PivotTable':
-    df = pivot.apply(pd.to_numeric, errors='coerce').reset_index()
-    return PivotTable(
-      labels = df[index_col].astype(str).tolist(),
-      series = [PivotRow(col, get_col_vals(df, col)) for col in df.columns if col != index_col]
-    )
-  
-  @staticmethod
-  def from_dict(map:dict[str, Any]) -> 'PivotTable':
-    return PivotTable(
-      labels=map['labels'],
-      series=[PivotRow.from_dict(s) for s in map['series']]
-    )
-    
-  def to_dataframe(self, index_col:str) -> pd.DataFrame:
-    data = {index_col: self.labels}
-    for s in self.series:
-      data[s.name] = s.data
-    df = pd.DataFrame(data)
-    df = df.set_index(index_col)
-    return df
-    
-  def to_dict(self) -> dict[str, Any]:
-    return {'labels': self.labels, 'series': [row.to_dict() for row in self.series]}
   
 @dataclass
 class OverallBalance:  
   year_month:str
   month_end_balance:float
+  
+  @staticmethod
+  def create_json(balances:list['OverallBalance']) -> dict[str, Any]:
+    return {
+      'year_months': [b.year_month for b in balances],
+      'datasets': [
+        {
+          'name': 'Net Balance',
+          'data': [b.month_end_balance for b in balances]
+        }
+      ]
+    }
   
   @staticmethod
   def from_dict(map:dict[str, Any]) -> 'OverallBalance':
@@ -120,6 +92,22 @@ class OverallCashflow:
   rolling_avg:float|None
   
   @staticmethod
+  def create_json(balances:list['OverallCashflow']) -> dict[str, Any]:
+    return {
+      'year_months': [b.year_month for b in balances],
+      'datasets': [
+        {
+          'name': 'Net Cashflow',
+          'data': [b.cashflow for b in balances]
+        },
+        {
+          'name': 'Rolling Average',
+          'data': [b.rolling_avg for b in balances]
+        }
+      ]
+    }
+  
+  @staticmethod
   def from_dict(map:dict[str, Any]) -> 'OverallCashflow':
     return OverallCashflow(
       year_month=map['year_month'],
@@ -133,6 +121,12 @@ class OverallCashflow:
       'cashflow': self.cashflow,
       'rolling_avg': self.rolling_avg
     }
+    
+def display_name(account_number:str, conn:sqlite3.Connection) -> str:
+  cur = conn.cursor()
+  res = cur.execute("select display_name from accounts where account_number = ?", (account_number, ))
+  disp_name, = res.fetchone()
+  return disp_name
   
 def max_day_seq(tr:BankTransaction, conn:sqlite3.Connection) -> int | None:
   cursor = conn.cursor()
@@ -173,12 +167,6 @@ def transaction_exists(tr:BankTransaction, conn:sqlite3.Connection) -> bool:
     (tr.date, tr.description, tr.account_number))
   count, = res.fetchone()
   return count > 0
-
-def acct_disp_name(account_number:str, conn:sqlite3.Connection) -> str:
-  cursor = conn.cursor()
-  res = cursor.execute("SELECT display_name FROM accounts WHERE account_number = ?", (account_number,))
-  disp_name, = res.fetchone()
-  return disp_name
 
 def transaction_date_range(conn:sqlite3.Connection) -> tuple[dt.date, dt.date]:
   cur = conn.cursor()
@@ -249,7 +237,7 @@ def prep_monthly_stats_from_txn_history(conn:sqlite3.Connection) -> DF:
       new_row = DF.from_records([{
         'year_month': month,
         'account_number': account,
-        'acct_disp_name': acct_disp_name(account, conn),
+        'acct_disp_name': display_name(account, conn),
         'cashflow': 0,
         'month_end_balance': latest_row['month_end_balance']
       }])
@@ -308,12 +296,14 @@ def fetch_monthly_account_stats(
     """
     select ms.YEAR_MONTH, 
            ms.ACCOUNT_NUMBER,
+           ac.DISPLAY_NAME,
            ms.CASHFLOW, 
            ms.MONTH_END_BALANCE 
-    from MONTHLY_ACCOUNT_STATS ms
+    from MONTHLY_ACCOUNT_STATS ms, ACCOUNTS ac
     where (ms.YEAR_MONTH >= :start_yr_mo or :start_yr_mo is null)
     and (ms.YEAR_MONTH <= :end_yr_mo or :end_yr_mo is null)
     and (:include_all or ms.YEAR_MONTH in (select value from json_each(:include_yr_mo)))
+    and ac.ACCOUNT_NUMBER = ms.ACCOUNT_NUMBER
     order by YEAR_MONTH desc, ms.ACCOUNT_NUMBER
     """, ({
       'start_yr_mo': start_yr_mo, 
@@ -322,38 +312,100 @@ def fetch_monthly_account_stats(
       'include_all': include_all
     })
   )
-  return [MonthlyAccountStats(yr_mo, acct_no, cashflow, balance) 
-          for yr_mo, acct_no, cashflow, balance in res.fetchall()]
+  return [MonthlyAccountStats(yr_mo, acct_no, disp_name, cashflow, balance) 
+          for yr_mo, acct_no, disp_name, cashflow, balance in res.fetchall()]
+
+@dataclass
+class MonthlyCashflow:
+  account_number:str
+  display_name:str
+  cashflows:list[float]
+  
+@dataclass
+class CashflowByAccount:
+  year_months:list[str]
+  accounts:list[MonthlyCashflow]  
+  
+  def create_json(self):
+    return {
+      'year_months': self.year_months,
+      'datasets': [{'name': cf.display_name, 'data': cf.cashflows} for cf in self.accounts]
+    }
+  
+  @staticmethod
+  def from_dataframe(pivot:pd.DataFrame, conn:sqlite3.Connection) -> 'CashflowByAccount':
+    df = pivot.apply(pd.to_numeric, errors='coerce').reset_index()
+    return CashflowByAccount(
+      year_months=df['year_month'].astype(str).tolist(),
+      accounts=[
+        MonthlyCashflow(
+          account_number=col, 
+          display_name=display_name(col, conn),
+          cashflows=get_col_vals(df, col)
+        ) for col in df.columns if col != 'year_month'
+      ]
+    )
+    
+@dataclass
+class MonthlyBalance:
+  account_number:str
+  display_name:str
+  balances:list[float]
+  
+@dataclass
+class BalanceByAccount:
+  year_months:list[str]
+  accounts:list[MonthlyBalance]  
+  
+  def create_json(self):
+    return {
+      'year_months': self.year_months,
+      'datasets': [{'name': cf.display_name, 'data': cf.balances} for cf in self.accounts]
+    }
+  
+  @staticmethod
+  def from_dataframe(pivot:pd.DataFrame, conn:sqlite3.Connection) -> 'BalanceByAccount':
+    df = pivot.apply(pd.to_numeric, errors='coerce').reset_index()
+    return BalanceByAccount(
+      year_months=df['year_month'].astype(str).tolist(),
+      accounts=[
+        MonthlyBalance(
+          account_number=col, 
+          display_name=display_name(col, conn),
+          balances=get_col_vals(df, col)
+        ) for col in df.columns if col != 'year_month'
+      ]
+    )
   
 def fetch_cashflow_by_account(
   conn:sqlite3.Connection,
   start_date:dt.date|None = None,
   end_date:dt.date|None = None,
   include_months:list[str] = []
-) -> PivotTable:
+) -> CashflowByAccount:
   df = MonthlyAccountStats.dataframe_from_list(
     fetch_monthly_account_stats(conn, start_date, end_date, include_months))
-  return PivotTable.from_dataframe(df.pivot_table(
+  return CashflowByAccount.from_dataframe(df.pivot_table(
     index='year_month',
     columns='account_number',
     values='cashflow',
-    aggfunc='sum'
-  ), index_col='year_month')
+    aggfunc=lambda r: np.round(np.sum(r), 2)
+  ), conn)
   
 def fetch_balance_by_account(
   conn:sqlite3.Connection,
   start_date:dt.date|None = None,
   end_date:dt.date|None = None,
   include_months:list[str] = []
-) -> PivotTable:
+) -> BalanceByAccount:
   df = MonthlyAccountStats.dataframe_from_list(
     fetch_monthly_account_stats(conn, start_date, end_date, include_months))
-  return PivotTable.from_dataframe(df.pivot_table(
+  return BalanceByAccount.from_dataframe(df.pivot_table(
     index='year_month',
     columns='account_number',
     values='month_end_balance',
-    aggfunc='sum'
-  ), index_col='year_month')
+    aggfunc=lambda r: np.round(np.sum(r), 2)
+  ), conn)
   
 def fetch_balance_overall(
   conn:sqlite3.Connection,
@@ -420,3 +472,13 @@ def fetch_cashflow_overall(
       'window': window_months
     }))
   return [OverallCashflow(ym, cf, ra) for ym, cf, ra in res.fetchall()]
+
+@dataclass
+class Account:
+  account_number:str
+  display_name:str
+
+def fetch_accounts(conn:sqlite3.Connection) -> list[Account]:
+  cur = conn.cursor()
+  res = cur.execute("select account_number, display_name from accounts")
+  return [Account(acct_no, disp_name) for acct_no, disp_name in res.fetchall()]
