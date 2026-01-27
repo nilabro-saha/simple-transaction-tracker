@@ -9,13 +9,13 @@ from enum import Enum
 from typing import Any
 import babel.dates as bbld
 import datetime as dt
-from mapped_schema import Column as msc
+from app.mapped_schema import Column as msc
 import os
 import re
 import pdfplumber
 import numpy as np
-from mapped_schema import MappedSchema as ms
-from utils import parse_date, strip_locale_formatting
+from app.mapped_schema import MappedSchema as ms
+from app.utils import parse_date, strip_locale_formatting, seek_target_headers
 
 @dataclass
 class StmtFile:
@@ -325,23 +325,6 @@ def read_encrypted_xlsx_bytes(password:str, encrypted_file_path:str) -> io.Bytes
 
 def split_at_nan_rows(df:DF) -> List[DF]: 
   return np.split(df, df[df.isnull().all(axis=1)].index)
-
-def seek_target_headers(df:DF, target_headers:list[str]) -> DF | None:
-  if all(col in df.columns for col in target_headers):
-    return df
-  normalized_tgt_hdrs = [h.strip().lower() for h in target_headers]
-  ndf = df.reset_index(drop=True)
-  start_row:int | None = None
-  for i, row in ndf.iterrows():
-    row_normalized = [str(cell).strip().lower() for cell in row]
-    if all(header in row_normalized for header in normalized_tgt_hdrs):
-      start_row = cast(int, i)
-  if start_row is None:
-    return None
-  ndf = ndf.iloc[start_row:].reset_index(drop=True).T.drop_duplicates().T
-  ndf.columns = ndf.iloc[0]
-  ndf = ndf[1:][target_headers].reset_index(drop=True)
-  return ndf
 
 def adapt_value_to_column(value:Any, column:StmtColumn):
   match column.data_type:

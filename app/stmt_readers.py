@@ -1,9 +1,9 @@
 import pandas as pd
-import stmt_reader_support as srs
-from mapped_schema import MappedSchema as ms
-from mapped_schema import Column as msc
-from stmt_reader_support import StmtColType as sct
-from stmt_reader_support import StmtMapperType
+import app.stmt_reader_support as srs
+from app.mapped_schema import MappedSchema as ms
+from app.mapped_schema import Column as msc
+from app.stmt_reader_support import StmtColType as sct
+from app.stmt_reader_support import StmtMapperType
 import os
 import camelot
 

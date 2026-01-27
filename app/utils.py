@@ -3,6 +3,8 @@ import babel.dates as bbld
 import pandas as pd
 import datetime as dt
 import re
+from typing import cast
+import pandas as pd
 
 def strip_locale_formatting(number:Any) -> float:
   num_str = str(number).strip()
@@ -37,3 +39,20 @@ def parse_date(received:Any, format:str) -> dt.date:
     return dt.datetime.strptime(date_str, posix_format).date()
   else:
     return bbld.parse_date(date_str, format=format)
+  
+def seek_target_headers(df:pd.DataFrame, target_headers:list[str]) -> pd.DataFrame | None:
+  if all(col in df.columns for col in target_headers):
+    return df
+  normalized_tgt_hdrs = [h.strip().lower() for h in target_headers]
+  ndf = df.reset_index(drop=True)
+  start_row:int | None = None
+  for i, row in ndf.iterrows():
+    row_normalized = [str(cell).strip().lower() for cell in row]
+    if all(header in row_normalized for header in normalized_tgt_hdrs):
+      start_row = cast(int, i)
+  if start_row is None:
+    return None
+  ndf = ndf.iloc[start_row:].reset_index(drop=True).T.drop_duplicates().T
+  ndf.columns = ndf.iloc[0]
+  ndf = ndf[1:][target_headers].reset_index(drop=True)
+  return ndf

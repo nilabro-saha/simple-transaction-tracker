@@ -4,11 +4,12 @@ from dataclasses import dataclass
 import datetime as dt
 from pandas import DataFrame as DF
 from dataclasses import replace
-import stmt_reader_support as srs
+import app.stmt_reader_support as srs
 from dateutil.relativedelta import relativedelta
 from typing import Any
 import json
 from typing import TypeVar
+import numpy as np
 
 @dataclass
 class BankTransaction:
@@ -65,6 +66,9 @@ class PivotRow:
   @staticmethod
   def from_dict(map:dict[str, Any]) -> 'PivotRow':
     return PivotRow(name=map['name'], data=map['data'])
+
+def get_col_vals(df:pd.DataFrame, col:str) -> list[Any]:
+  return [(None if np.isnan(val) else val) for val in df[col].tolist()]
     
 @dataclass
 class PivotTable:
@@ -73,10 +77,10 @@ class PivotTable:
   
   @staticmethod
   def from_dataframe(pivot:pd.DataFrame, index_col:str) -> 'PivotTable':
-    df = pivot.reset_index()
+    df = pivot.apply(pd.to_numeric, errors='coerce').reset_index()
     return PivotTable(
       labels = df[index_col].astype(str).tolist(),
-      series = [PivotRow(col, df[col].tolist()) for col in df.columns if col != index_col]
+      series = [PivotRow(col, get_col_vals(df, col)) for col in df.columns if col != index_col]
     )
   
   @staticmethod
@@ -351,7 +355,7 @@ def fetch_balance_by_account(
     aggfunc='sum'
   ), index_col='year_month')
   
-def fecth_balance_overall(
+def fetch_balance_overall(
   conn:sqlite3.Connection,
   start_date:dt.date|None = None,
   end_date:dt.date|None = None,
