@@ -223,7 +223,7 @@ class EPFOStmtReader(srs.StmtReader):
           srs.StmtColumn('contribution/pension', sct.REAL, True, mapped_column=msc.DEPOSITED)
         ],
         adapter_type=StmtMapperType.DEPOSITED_AND_STARTING_BALANCE,
-        starting_bal_col = 'starting_bal'
+        starting_bal_col='starting_bal'
       ),
       account_no=account_no, 
       src_data_dir=src_data_dir, 

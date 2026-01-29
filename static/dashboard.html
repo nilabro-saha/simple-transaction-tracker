@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Personal Finance Dashboard</title>
+        <link rel="stylesheet" href="/static/dashboard.css">
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <!-- <link> -->
+    </head>
+    <body>
+
+        <header class="app-header">
+            <h1>Spending Dashboard</h1>
+        
+            <button id="refresh-btn">Refresh Data</button>
+        
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="by-account">Stats by Account</button>
+                <button class="tab-btn" data-tab="overall">Stats Overall</button>
+            </div>
+        </header>
+
+        <main class="app-content">
+            <div class="tab-content active" id="by-account">
+                <section>
+                    <h2>Cashflow by Account</h2>
+                    <canvas id="cashflowChart"></canvas>
+                </section>
+        
+                <section>
+                    <h2>Balance by Account</h2>
+                    <canvas id="balanceChart"></canvas>
+                </section>
+            </div>
+        
+            <div class="tab-content" id="overall">
+        
+            </div>
+        </main>
+
+        <script src="/static/dashboard.js"></script>
+    </body>
+</html>

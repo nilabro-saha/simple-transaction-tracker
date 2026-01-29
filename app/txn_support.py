@@ -59,7 +59,7 @@ class MonthlyAccountStats:
     }
 
 def get_col_vals(df:pd.DataFrame, col:str) -> list[Any]:
-  return [(None if np.isnan(val) else val) for val in df[col].tolist()]
+  return [(0.0 if np.isnan(val) else val) for val in df[col].tolist()]
   
 @dataclass
 class OverallBalance:  
@@ -305,12 +305,12 @@ def fetch_monthly_account_stats(
     and (:include_all or ms.YEAR_MONTH in (select value from json_each(:include_yr_mo)))
     and ac.ACCOUNT_NUMBER = ms.ACCOUNT_NUMBER
     order by YEAR_MONTH desc, ms.ACCOUNT_NUMBER
-    """, ({
+    """, {
       'start_yr_mo': start_yr_mo, 
       'end_yr_mo': end_yr_mo, 
       'include_yr_mo': json.dumps(include_months), 
       'include_all': include_all
-    })
+    }
   )
   return [MonthlyAccountStats(yr_mo, acct_no, disp_name, cashflow, balance) 
           for yr_mo, acct_no, disp_name, cashflow, balance in res.fetchall()]
@@ -428,12 +428,12 @@ def fetch_balance_overall(
     and (:include_all or ms.YEAR_MONTH in (select value from json_each(:include_yr_mo)))
     group by ms.YEAR_MONTH
     order by ms.YEAR_MONTH desc
-    """, ({
+    """, {
       'start_yr_mo': start_yr_mo,
       'end_yr_mo': end_yr_mo,
       'include_all': include_all,
       'include_yr_mo': json.dumps(include_months)
-    }))
+    })
   return [OverallBalance(year_month, balance) for year_month, balance in res.fetchall()]
 
 def fetch_cashflow_overall(
@@ -464,13 +464,13 @@ def fetch_cashflow_overall(
     and (:end_yr_mo is null or cf.year_month <= :end_yr_mo)
     and (:include_all or cf.year_month in (select value from json_each(:include_yr_mo)))
     order by cf.year_month desc
-    """, ({
+    """, {
       'start_yr_mo': start_yr_mo,
       'end_yr_mo': end_yr_mo,
       'include_all': include_all,
       'include_yr_mo': json.dumps(include_months),
       'window': window_months
-    }))
+    })
   return [OverallCashflow(ym, cf, ra) for ym, cf, ra in res.fetchall()]
 
 @dataclass
