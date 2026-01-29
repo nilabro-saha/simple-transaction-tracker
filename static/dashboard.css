@@ -1,12 +1,22 @@
+:root {
+    --font-sans: "Roboto", system-ui, -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Arial, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 html, body {
     height: 100%;
     margin: 0;
+    font-family: var(--font-sans);
 }
 
 .tabs {
     display: flex;
     border-bottom: 1px solid #ddd;
-    margin-bottom: 12px;
+    margin-bottom: 0;
 }
 
 .tab-btn {
@@ -42,7 +52,7 @@ html, body {
     top: 0;
     background: white;
     z-index: 10;
-    padding: 12px 16px;
+    padding: 12px 16px 0;
     border-bottom: 16px;
 }
 
@@ -55,4 +65,41 @@ html, body {
 canvas {
     max-width: 100%;
     margin-bottom: 24px;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 16px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+@container (max-width: 1000px) {
+    .chart-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.app-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    height: 100vh;
+}
+
+.sidebar {
+    overflow-y: auto;
+}
+
+.main {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }

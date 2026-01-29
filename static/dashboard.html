@@ -2,40 +2,77 @@
 <html>
     <head>
         <title>Personal Finance Dashboard</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
         <link rel="stylesheet" href="/static/dashboard.css">
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <!-- <link> -->
     </head>
     <body>
 
-        <header class="app-header">
-            <h1>Spending Dashboard</h1>
-        
-            <button id="refresh-btn">Refresh Data</button>
-        
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="by-account">Stats by Account</button>
-                <button class="tab-btn" data-tab="overall">Stats Overall</button>
-            </div>
-        </header>
+        <div class="app-layout">
+            <!-- LEFT SIDEBAR -->
+            <aside class="sidebar">
+                <button id="refresh-btn">Refresh Data</button>
+                
+                <h2>Filters</h2>
+            
+                <div class="date-filter">
+                    <label>
+                        From 
+                        <input type="date" id="startDate">
+                    </label>
+                    <label>
+                        To 
+                        <input type="date" id="endDate">
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" id="disableDateFilter">
+                        All time
+                    </label>
+                    <button id="applyDateFilter">Apply</button>
+                </div>
+            </aside>
 
-        <main class="app-content">
-            <div class="tab-content active" id="by-account">
-                <section>
-                    <h2>Cashflow by Account</h2>
-                    <canvas id="cashflowChart"></canvas>
+            <!-- MAIN AREA -->
+            <main class="main">
+                <header class="app-header">
+                    <h1>Nilabro's Asset Growth</h1>
+                </header>
+                <section class="app-content">
+                    <div class="dashboard">
+                        <div class="chart-grid">
+                            <div class="chart-card">
+                                <section>
+                                    <h2>Cashflow by Account</h2>
+                                    <canvas id="cashflowChart"></canvas>
+                                </section>
+                            </div>
+                            <div class="chart-card">
+                                <section>
+                                    <h2>Balance by Account</h2>
+                                    <canvas id="balanceChart"></canvas>
+                                </section>
+                            </div>
+                            <div class="chart-card">
+                                <section>
+                                    <h2>Cashflow Overall</h2>
+                                    <canvas id="overallCashflowChart"></canvas>
+                                </section>
+                            </div>
+                            <div class="chart-card">
+                                <section>
+                                    <h2>Balance Overall</h2>
+                                    <canvas id="overallBalanceChart"></canvas>
+                                </section>
+                            </div>
+                        </div>
+                    </div>
                 </section>
-        
-                <section>
-                    <h2>Balance by Account</h2>
-                    <canvas id="balanceChart"></canvas>
-                </section>
-            </div>
-        
-            <div class="tab-content" id="overall">
-        
-            </div>
-        </main>
+            </main>
+        </div>
+
 
         <script src="/static/dashboard.js"></script>
     </body>

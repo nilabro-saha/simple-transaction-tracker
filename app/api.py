@@ -45,7 +45,7 @@ async def cashflow(
     conn:sqlite3.Connection=Depends(get_connection)
 ):
     cashflows = fetch_cashflow_overall(conn, window, start, end, months)
-    return OverallCashflow.create_json(cashflows)
+    return OverallCashflow.create_json(cashflows, window)
     
 @router.get('/balance-by-account')
 async def balance_by_account(

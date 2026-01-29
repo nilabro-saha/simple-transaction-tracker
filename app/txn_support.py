@@ -92,7 +92,7 @@ class OverallCashflow:
   rolling_avg:float|None
   
   @staticmethod
-  def create_json(balances:list['OverallCashflow']) -> dict[str, Any]:
+  def create_json(balances:list['OverallCashflow'], window:int) -> dict[str, Any]:
     return {
       'year_months': [b.year_month for b in balances],
       'datasets': [
@@ -101,7 +101,7 @@ class OverallCashflow:
           'data': [b.cashflow for b in balances]
         },
         {
-          'name': 'Rolling Average',
+          'name': f'{window}-Month Rolling Average',
           'data': [b.rolling_avg for b in balances]
         }
       ]
@@ -427,7 +427,7 @@ def fetch_balance_overall(
     and (:end_yr_mo is null or ms.YEAR_MONTH <= :end_yr_mo)
     and (:include_all or ms.YEAR_MONTH in (select value from json_each(:include_yr_mo)))
     group by ms.YEAR_MONTH
-    order by ms.YEAR_MONTH desc
+    order by ms.YEAR_MONTH
     """, {
       'start_yr_mo': start_yr_mo,
       'end_yr_mo': end_yr_mo,
@@ -463,7 +463,7 @@ def fetch_cashflow_overall(
     where (:start_yr_mo is null or cf.year_month >= :start_yr_mo)
     and (:end_yr_mo is null or cf.year_month <= :end_yr_mo)
     and (:include_all or cf.year_month in (select value from json_each(:include_yr_mo)))
-    order by cf.year_month desc
+    order by cf.year_month
     """, {
       'start_yr_mo': start_yr_mo,
       'end_yr_mo': end_yr_mo,
