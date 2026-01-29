@@ -16,7 +16,7 @@
             <aside class="sidebar">
                 <button id="refresh-btn">Refresh Data</button>
                 
-                <h2>Filters</h2>
+                <h2>Select Date Range</h2>
             
                 <div class="filter-group">
                     <label for="startDate">From</label> 
@@ -33,12 +33,24 @@
                 <div class="filter-group date-filter">
                     <button id="applyDateFilter">Apply</button>
                 </div>
+
+                <h2>Select Months</h2>
+
+                <div class="filter-group month-filter">
+                    <button id="applyMonthFilter">Apply</button>
+                </div>
+
+                <div class="filter-group">
+                    <div class="months-scrollable-pane">
+                        <div id="monthCheckboxes"></div>
+                    </div>
+                </div>
             </aside>
 
             <!-- MAIN AREA -->
             <main class="main">
                 <header class="app-header">
-                    <h1>Nilabro's Asset Growth</h1>
+                    <h1>Nilabro's Asset Growth Dashboard</h1>
                 </header>
                 <section class="app-content">
                     <div class="dashboard">

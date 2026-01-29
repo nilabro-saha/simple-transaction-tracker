@@ -1,6 +1,53 @@
 let byAccountLoaded = false;
 let overallLoaded = false;
 
+const TABLEAU10 = [
+    '#c21f5b',
+    '#fbc02c',
+    '#ff5722',
+    '#bf360c',
+    '#fdf9c3',
+    '#c5cae9',
+    '#fff177',
+    '#f8bbd0',
+    '#e1bee7',
+    '#3f51b5',
+    '#aed581',
+    '#253137',
+    '#ba68c8',
+    '#ffccbc',
+    '#9c27b0',
+    '#90a4ae',
+    '#e92663',
+    '#0488d1',
+    '#7986cb',
+    '#e64a18',
+    '#03a9f4',
+    '#f06292',
+    '#f67f17',
+    '#19237e',
+    '#03579b',
+    '#cfd8dc',
+    '#ddedc8',
+    '#689f38',
+    '#607d8b',
+    '#b3e5fc',
+    '#303f9f',
+    '#33691d',
+    '#455a64',
+    '#88144f',
+    '#8bc34a',
+    '#ff8a65',
+    '#4a198c',
+    '#7b21a2',
+    '#4fc3f7',
+    '#ffec3a'
+]
+
+function colorFromTableau10(i) {
+    return TABLEAU10[(i + 1) % TABLEAU10.length]
+}
+
 async function refreshDashboard() {
     console.log("Refreshing dashboard...");
 
@@ -63,13 +110,21 @@ function toChartJsData(apiData) {
 
 function renderChart(id, type, data, options = {}) {
     const ctx = document.getElementById(id);
-    if (charts[id]) charts[id].destroy();
-    data.datasets.forEach(ds => {
-        const color = colorFromLabel(ds.label);
+    data.datasets.forEach((ds, i) => {
+        const color = colorFromTableau10(i);
         ds.backgroundColor = color;
         ds.borderColor = color;
     });
-    charts[id] = new Chart(ctx, {type, data, options});
+    if (charts[id]) {
+        console.log(`Updating chart... ${id}`);
+        charts[id].data = data;
+        charts[id].type = type;
+        charts[id].options = options;
+        charts[id].update();
+    } else {
+        console.log(`Creating new chart... ${id}`);
+        charts[id] = new Chart(ctx, {type, data, options});
+    }
 }
 
 async function fetchData(endpoint) {
@@ -78,7 +133,8 @@ async function fetchData(endpoint) {
 }
 
 async function loadCashflowByAccount() {
-    const params = {...getDateParams()};
+    const params = {...getDateParams(), ...getMonthParams()};
+    console.log(params);
     const query = buildQuery(params);
     const data = await fetchData(`/api/cashflow-by-account${query}`);
     const chartData = toChartJsData(data);
@@ -98,7 +154,7 @@ async function loadCashflowByAccount() {
 }
 
 async function loadBalanceByAccount() {
-    const params = {...getDateParams()};
+    const params = {...getDateParams(), ...getMonthParams()};
     const query = buildQuery(params);
     const data = await fetchData(`/api/balance-by-account${query}`);
     const chartData = toChartJsData(data);
@@ -121,7 +177,7 @@ async function loadBalanceByAccount() {
                 hoverRadius: 5
             },
             line: {
-                borderWidth: 1,
+                borderWidth: 0,
                 snapGaps: true,
                 fill: true
             }
@@ -130,7 +186,7 @@ async function loadBalanceByAccount() {
 }
 
 async function loadOverallBalance() {
-    const params = {...getDateParams()};
+    const params = {...getDateParams(), ...getMonthParams()};
     const query = buildQuery(params);
     const data = await fetchData(`/api/balance${query}`);
     const chartData = toChartJsData(data);
@@ -146,7 +202,7 @@ async function loadOverallBalance() {
 }
 
 async function loadOverallCashflow() {
-    const params = {...getDateParams()};
+    const params = {...getDateParams(), ...getMonthParams()};
     const query = buildQuery(params);
     const data = await fetchData(`/api/cashflow${query}`);
     const chartData = toChartJsData(data);
@@ -156,14 +212,14 @@ async function loadOverallCashflow() {
             ds.fill = false;
             ds.borderWidth = 2;
             ds.tension = 0.3;
-            ds.pointRadius = 2;
+            ds.pointRadius = 1;
             ds.borderColor = colorFromLabel(ds.label);
             ds.backgroundColor = colorFromLabel(ds.label);
-            ds.order = 2;
+            ds.order = 1;
         } else {
             ds.type = "bar";
             ds.backgroundColor = colorFromLabel(ds.label);
-            ds.order = 1;
+            ds.order = 2;
         }
     });
     renderChart('overallCashflowChart', 'bar', chartData, {
@@ -192,12 +248,20 @@ function getDateParams() {
 }
 
 function buildQuery(params) {
-    const qs = new URLSearchParams(params);
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(item => qs.append(key, item));
+      } else if (value !== undefined && value !== null) {
+        qs.append(key, value);
+      }
+    });
     return qs.toString() ? `?${qs.toString()}` : "";
 }
 
 async function loadContent() {
     initTabs();
+    await loadAvailableMonths();
     await refreshDashboard();
 
     const refreshBtn = document.getElementById("refresh-btn");
@@ -210,10 +274,75 @@ function toggleDateInputs() {
     document.getElementById("endDate").disabled = disabled;
 }
 
+async function loadAvailableMonths() {
+    const params = {...getDateParams()};
+    const query = buildQuery(params);
+    const months = await fetchData(`/api/months${query}`);
+    renderMonthCheckboxes(months);
+}
+
+function getMonthParams() {
+    const selectAll = document.getElementById("selectAllMonths");
+    if (selectAll.checked) {
+        return { month: [] };
+    }
+    const selectedMonths = Array
+        .from(document.querySelectorAll(".month-checkbox"))
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+    return { month: selectedMonths };
+}
+
+function renderMonthCheckboxes(months) {
+    const container = document.getElementById("monthCheckboxes");
+    container.innerHTML = "";
+
+    const selectAllRow = document.createElement("div");
+    selectAllRow.className = "filter-group";
+    selectAllRow.innerHTML = `
+        <label>
+            <input type="checkbox" id="selectAllMonths" checked>
+            Select all
+        </label>
+    `;
+    container.appendChild(selectAllRow);
+
+    months.forEach(month => {
+        const row = document.createElement("div");
+        row.className = "filter-group month-row";
+        row.innerHTML = `
+            <label>
+                <input type="checkbox" class="month-checkbox" value=${month} disabled>
+                ${month}
+            </label>
+        `;
+        container.appendChild(row);
+    })
+    wireMonthCheckboxLogic();
+}
+
+function wireMonthCheckboxLogic() {
+    const selectAll = document.getElementById("selectAllMonths");
+    const monthCheckboxes = document.querySelectorAll(".month-checkbox");
+    selectAll.addEventListener("change", () => {
+        const enabled = !selectAll.checked;
+        monthCheckboxes.forEach(cb => {
+            cb.disabled = !enabled;
+            if (!enabled) {
+                cb.checked = false;
+            } else {
+                cb.checked = true;
+            }
+        })
+    })
+}
+
 document.addEventListener("DOMContentLoaded", loadContent);
 document.getElementById("applyDateFilter").addEventListener("click", async () => {
+    await loadAvailableMonths();
     await refreshDashboard();
 });
+document.getElementById("applyMonthFilter").addEventListener("click", refreshDashboard);
 document.getElementById("disableDateFilter").addEventListener("change", toggleDateInputs);
 
 toggleDateInputs();

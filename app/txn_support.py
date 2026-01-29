@@ -8,7 +8,7 @@ import app.stmt_reader_support as srs
 from dateutil.relativedelta import relativedelta
 from typing import Any
 import json
-from typing import TypeVar
+from typing import TypeVar, Literal
 import numpy as np
 
 @dataclass
@@ -482,3 +482,25 @@ def fetch_accounts(conn:sqlite3.Connection) -> list[Account]:
   cur = conn.cursor()
   res = cur.execute("select account_number, display_name from accounts")
   return [Account(acct_no, disp_name) for acct_no, disp_name in res.fetchall()]
+
+def fetch_stat_months(
+  start_date:dt.date|None,
+  end_date:dt.date|None,  
+  sort:Literal['asc','desc'],
+  conn:sqlite3.Connection
+) -> list[str]:
+  if sort not in ['asc', 'desc']:
+    raise ValueError(f"Illegal value received for parameter 'sort': {sort}")
+  start_yr_mo = None if start_date is None else dt.date.strftime(start_date, '%Y-%m')
+  end_yr_mo = None if end_date is None else dt.date.strftime(end_date, '%Y-%m')
+  cur = conn.cursor()
+  res = cur.execute(
+    f"""
+    select distinct ms.YEAR_MONTH 
+    from MONTHLY_ACCOUNT_STATS ms
+    where (:start_yr_mo is null or ms.YEAR_MONTH >= :start_yr_mo)
+    and (:end_yr_mo is null or ms.YEAR_MONTH <= :end_yr_mo)
+    order by ms.YEAR_MONTH {sort}
+    """, {'start_yr_mo': start_yr_mo, 'end_yr_mo': end_yr_mo}
+  )
+  return [year_mo for year_mo, in res.fetchall()]
