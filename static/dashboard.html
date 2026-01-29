@@ -18,19 +18,19 @@
                 
                 <h2>Filters</h2>
             
-                <div class="date-filter">
-                    <label>
-                        From 
-                        <input type="date" id="startDate">
-                    </label>
-                    <label>
-                        To 
-                        <input type="date" id="endDate">
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" id="disableDateFilter">
-                        All time
-                    </label>
+                <div class="filter-group">
+                    <label for="startDate">From</label> 
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label for="endDate">To</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="filter-group checkbox">
+                    <label class="checkbox" for="disableDateFilter">All time</label>
+                    <input type="checkbox" id="disableDateFilter">
+                </div>
+                <div class="filter-group date-filter">
                     <button id="applyDateFilter">Apply</button>
                 </div>
             </aside>
