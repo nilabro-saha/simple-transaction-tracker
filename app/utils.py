@@ -5,6 +5,9 @@ import datetime as dt
 import re
 from typing import cast
 import pandas as pd
+from statsmodels.regression.linear_model import RegressionResults
+import statsmodels.formula.api as smf
+from dataclasses import dataclass
 
 def strip_locale_formatting(number:Any) -> float:
   num_str = str(number).strip()
@@ -56,3 +59,30 @@ def seek_target_headers(df:pd.DataFrame, target_headers:list[str]) -> pd.DataFra
   ndf.columns = ndf.iloc[0]
   ndf = ndf[1:][target_headers].reset_index(drop=True)
   return ndf
+
+@dataclass
+class LinearPrediction:
+  x: list[Any]
+  y: list[float]
+  r_squared: float
+  formula:str
+
+def generate_linear_model(x:list[Any], y:list[float], extend:int) -> LinearPrediction:
+  data = {'x': range(len(x)), 'y': y}
+  model = smf.ols(formula='y ~ x', data=data)
+  fitted = cast(RegressionResults, model.fit())
+  params:pd.Series = fitted.params
+
+  intercept = params.iloc[0]
+  slope = params.iloc[1]
+
+  pred_x = list(x)
+  pred_x.extend([f'ext-{i+1}' for i in range(extend)])
+  pred_y = [round(x * slope + intercept, 2) for x in range(len(pred_x))]
+
+  return LinearPrediction(
+    x=pred_x,
+    y=pred_y,
+    r_squared=round(fitted.rsquared, 6),
+    formula=f'X*{round(slope, 2)} + {round(intercept, 2)}'
+  )

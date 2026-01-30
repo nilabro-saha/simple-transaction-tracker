@@ -13,6 +13,10 @@ from app.txn_support import OverallBalance, OverallCashflow
 import sqlite3
 import datetime as dt
 from typing import Literal, Optional
+from pydantic import BaseModel
+from dataclasses import dataclass
+from typing import Any
+from app.utils import generate_linear_model
 
 router = APIRouter()
 
@@ -81,3 +85,13 @@ async def months(
     conn:sqlite3.Connection=Depends(get_connection)
 ):
     return fetch_stat_months(start, end, sort, conn)
+
+@dataclass
+class RegressionRequest(BaseModel):
+    x:list[Any]
+    y:list[float]
+    extend:int=0
+
+@router.post('/trendline/')
+async def trendline(request:RegressionRequest):
+    return generate_linear_model(request.x, request.y, request.extend)
