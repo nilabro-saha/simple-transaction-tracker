@@ -77,7 +77,7 @@ def generate_linear_model(x:list[Any], y:list[float], extend:int) -> LinearPredi
   slope = params.iloc[1]
 
   pred_x = list(x)
-  pred_x.extend([f'ext-{i+1}' for i in range(extend)])
+  pred_x.extend([f'+{i+1}' for i in range(extend)])
   pred_y = [round(x * slope + intercept, 2) for x in range(len(pred_x))]
 
   return LinearPrediction(

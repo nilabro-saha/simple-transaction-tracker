@@ -27,8 +27,8 @@
                     <input type="date" id="endDate">
                 </div>
                 <div class="filter-group checkbox">
-                    <label class="checkbox" for="disableDateFilter">All time</label>
                     <input type="checkbox" id="disableDateFilter">
+                    <label class="checkbox" for="disableDateFilter">All time</label>
                 </div>
                 <div class="filter-group date-filter">
                     <button id="applyDateFilter">Apply</button>
@@ -40,11 +40,7 @@
                     <button id="applyMonthFilter">Apply</button>
                 </div>
 
-                <div class="filter-group">
-                    <div class="months-scrollable-pane">
-                        <div id="monthCheckboxes"></div>
-                    </div>
-                </div>
+                <div id="monthCheckboxes" class="months-scrollable-pane"></div>
             </aside>
 
             <!-- MAIN AREA -->
@@ -70,12 +66,22 @@
                             <div class="chart-card">
                                 <section>
                                     <h2>Cashflow Overall</h2>
+                                    <label class="checkbox" for="enableRollingAverage">Rolling Average</label>
+                                    <input type="checkbox" id="enableRollingAverage">
+                                    <label class="checkbox" for="rollingWindow"> / Window:</label>
+                                    <input class="checkbox" type="number" min="1" value="6" id="rollingWindow">
+                                    <label class="checkbox" for="rollingWindow">months</label>
                                     <canvas id="overallCashflowChart"></canvas>
                                 </section>
                             </div>
                             <div class="chart-card">
                                 <section>
                                     <h2>Balance Overall</h2>
+                                    <label class="checkbox" for="enableTrendline">Trendline</label>
+                                    <input type="checkbox" id="enableTrendline">
+                                    <label class="checkbox" for="extendByMonths"> / Predict ahead by</label>
+                                    <input class="checkbox" type="number" min="0" value="6" id="extendByMonths">
+                                    <label class="checkbox" for="extendByMonths">months</label>
                                     <canvas id="overallBalanceChart"></canvas>
                                 </section>
                             </div>

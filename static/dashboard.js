@@ -48,6 +48,12 @@ function colorFromTableau10(i) {
     return TABLEAU10[(i + 1) % TABLEAU10.length]
 }
 
+function colorFromLabelTableau10(label) {
+    let hash = 0;
+    for (let c of label) hash = c.charCodeAt(0) + ((hash << 5) - hash);
+    return TABLEAU10[hash % TABLEAU10.length]
+}
+
 async function refreshDashboard() {
     console.log("Refreshing dashboard...");
 
@@ -111,6 +117,26 @@ function toChartJsData(apiData) {
 function renderChart(id, type, data, options = {}) {
     const ctx = document.getElementById(id);
     data.datasets.forEach((ds, i) => {
+        if (ds.label.includes("Trendline")) {
+            ds.type = "line";
+            ds.fill = false;
+            ds.borderDash = [5, 5];
+            ds.borderWidth = 2
+            ds.tension = 0.3;
+            ds.pointRadius = 0;
+            ds.hoverRadius = 1;
+            ds.order = 1;
+        } else if (ds.label.includes("Rolling")) {
+            ds.type = "line";
+            ds.fill = false;
+            ds.borderWidth = 2;
+            ds.tension = 0.3;
+            ds.pointRadius = 1;
+            ds.order = 2;
+        } else {
+            ds.type = type;
+            ds.order = 3;
+        }
         const color = colorFromTableau10(i);
         ds.backgroundColor = color;
         ds.borderColor = color;
@@ -129,6 +155,17 @@ function renderChart(id, type, data, options = {}) {
 
 async function fetchData(endpoint) {
     const res = await fetch(endpoint);
+    return await res.json();
+}
+
+async function fetchDataPost(endpoint, payload) {
+    const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
     return await res.json();
 }
 
@@ -189,6 +226,21 @@ async function loadOverallBalance() {
     const params = {...getDateParams(), ...getMonthParams()};
     const query = buildQuery(params);
     const data = await fetchData(`/api/balance${query}`);
+
+    const trendlineEnabled = document.getElementById("enableTrendline").checked;
+    if (trendlineEnabled) {
+        const extendByMonths = document.getElementById("extendByMonths").value || 0;
+        const trendline = await fetchDataPost(`/api/trendline/`, {
+            extend: extendByMonths,
+            x: data.year_months,
+            y: data.datasets[0].data
+        });
+        data.year_months = trendline.x;
+        data.datasets.push({
+            name: `Trendline (R-squared: ${trendline.r_squared}, Equation: ${trendline.formula})`,
+            data: trendline.y
+        });
+    }
     const chartData = toChartJsData(data);
     renderChart('overallBalanceChart', 'line', chartData, {
         responsive: true,
@@ -201,27 +253,22 @@ async function loadOverallBalance() {
     });
 }
 
+async function togglePrediction() {
+    const trendlineEnabled = document.getElementById("enableTrendline").checked;
+    document.getElementById("extendByMonths").disabled = !trendlineEnabled;
+}
+
 async function loadOverallCashflow() {
-    const params = {...getDateParams(), ...getMonthParams()};
+    let params = {...getDateParams(), ...getMonthParams()};
+
+    const rollingAvgEnabled = document.getElementById("enableRollingAverage").checked;
+    if (rollingAvgEnabled) {
+        const rollingWindow = document.getElementById("rollingWindow").value;
+        params = {...params, window: rollingWindow}
+    }
     const query = buildQuery(params);
     const data = await fetchData(`/api/cashflow${query}`);
     const chartData = toChartJsData(data);
-    chartData.datasets.forEach((ds, i) => {
-        if (ds.label.includes("Rolling")) {
-            ds.type = "line";
-            ds.fill = false;
-            ds.borderWidth = 2;
-            ds.tension = 0.3;
-            ds.pointRadius = 1;
-            ds.borderColor = colorFromLabel(ds.label);
-            ds.backgroundColor = colorFromLabel(ds.label);
-            ds.order = 1;
-        } else {
-            ds.type = "bar";
-            ds.backgroundColor = colorFromLabel(ds.label);
-            ds.order = 2;
-        }
-    });
     renderChart('overallCashflowChart', 'bar', chartData, {
         responsive: true,
         plugins: {
@@ -231,6 +278,11 @@ async function loadOverallCashflow() {
             }
         }
     });
+}
+
+async function toggleRollingWindow() {
+    const rollingAverageEnabled = document.getElementById("enableRollingAverage").checked;
+    document.getElementById("rollingWindow").disabled = !rollingAverageEnabled;
 }
 
 function getDateParams() {
@@ -344,5 +396,17 @@ document.getElementById("applyDateFilter").addEventListener("click", async () =>
 });
 document.getElementById("applyMonthFilter").addEventListener("click", refreshDashboard);
 document.getElementById("disableDateFilter").addEventListener("change", toggleDateInputs);
+document.getElementById("enableTrendline").addEventListener("change", async () => {
+    await togglePrediction();
+    await loadOverallBalance();
+});
+document.getElementById("extendByMonths").addEventListener("input", loadOverallBalance);
+document.getElementById("enableRollingAverage").addEventListener("change", async () => {
+    await toggleRollingWindow();
+    await loadOverallCashflow();
+});
+document.getElementById("rollingWindow").addEventListener("input", loadOverallCashflow);
 
 toggleDateInputs();
+togglePrediction();
+toggleRollingWindow();
